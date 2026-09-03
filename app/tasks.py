@@ -6,15 +6,16 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from app.core.taskiq import broker
 from app.services.s3_service import S3Service
+from app.core.config import settings
 
 
 mail_config = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME", "user@example.com"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", "password"),
-    MAIL_FROM=os.getenv("MAIL_FROM", "noreply@example.com"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME", "Ticket Service"),
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=int(settings.MAIL_PORT),
+    MAIL_SERVER=settings.MAIL_SERVER,
+    MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
