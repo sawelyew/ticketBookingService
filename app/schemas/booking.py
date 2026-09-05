@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from uuid import UUID
+from app.models.payment import PaymentStatus
 
 
 class ReserveSeatSchema(BaseModel):
@@ -20,9 +21,9 @@ class PaymentInitRequest(BaseModel):
 class PaymentInitResponse(BaseModel):
     payment_id: UUID
     payment_url: str
-    status: str = "PENDING"
+    status: PaymentStatus = "PENDING"
 
 
 class WebhookRequest(BaseModel):
     payment_id: UUID
-    status: str
+    status: PaymentStatus

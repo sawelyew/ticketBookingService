@@ -14,8 +14,8 @@ class Ticket(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id", ondelete="CASCADE"), unique=True, nullable=False)
-    pdf_s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
-    signature_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    pdf_s3_key: Mapped[str] = mapped_column(String(512), nullable=True)
+    signature_hash: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     booking: Mapped["Booking"] = relationship(back_populates="ticket")

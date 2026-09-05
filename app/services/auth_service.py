@@ -18,6 +18,7 @@ from app.schemas.auth import (
     TokenSchema,
     RefreshTokenInputSchema
 )
+from app.tasks import send_otp_email
 
 
 class AuthService:
@@ -47,8 +48,8 @@ class AuthService:
             value=otp_code,
             ex=600,
         )
-
-        print(f"\n[DEV MAIL] OTP code for {user.email} (user_id={user.id}): {otp_code}\n")
+        
+        await send_otp_email.kiq(user_input.email, otp_code)
 
         return UserReadSchema.model_validate(user)
 

@@ -16,6 +16,7 @@ router = APIRouter(prefix="/events", tags=["Events"])
 @router.get("/")
 async def get_all_events(
     session: Annotated[AsyncSession, Depends(get_db)],
+    redis: Annotated[Redis, Depends(get_redis)],
     date_from: Annotated[datetime | None, Query(description="Фильтр: от даты")] = None,
     date_to: Annotated[datetime | None, Query(description="Фильтр: до даты")] = None,
     venue_name: Annotated[str | None, Query(description="Фильтр по площадке")] = None,
@@ -23,7 +24,7 @@ async def get_all_events(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> PaginatedEventsSchema:
-    service = EventService(session)
+    service = EventService(session, redis)
     events = await service.get_all_events(
         date_from=date_from,
         date_to=date_to,
@@ -36,10 +37,14 @@ async def get_all_events(
 
 
 @router.get("/{event_id}")
-async def get_event(event_id: int, session: Annotated[AsyncSession, Depends(get_db)]) -> EventResponseModel:
-    service = EventService(session)
+async def get_event(
+        event_id: int,
+        session: Annotated[AsyncSession, Depends(get_db)],
+        redis: Annotated[Redis, Depends(get_redis)],
+) -> EventResponseModel:
+    service = EventService(session, redis)
     event = await service.get_event_details(event_id)
-    return event
+    return {"event_details": event}
 
 
 @router.get("/{event_id}/seats")
@@ -50,4 +55,4 @@ async def get_seats(
 ) -> SeatResponseSchema:
     service = EventService(session, redis)
     seats = await service.get_event_seats(event_id)
-    return seats
+    return {"seats": seats}

@@ -1,15 +1,18 @@
 import uuid
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from typing import Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+import hmac
+import hashlib
 
 from app.models.booking import Booking, BookingStatus
 from app.models.event import Event
 from app.models.seat import Seat
 from app.models.ticket import Ticket
 from app.models.payment import PaymentTransaction, PaymentStatus
+from app.core.config import settings
 
 
 class BookingRepository:
@@ -50,6 +53,17 @@ class BookingRepository:
             user_id: int,
             seat_id: int,
     ) -> PaymentTransaction:
+        existing_booking = await self.session.scalar(
+            select(Booking).where(
+                Booking.seat_id == seat_id,
+                Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED])
+            )
+        )
+        if existing_booking:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This seat is already booked in the system"
+            )
 
         async with self.session.begin_nested():
             seat = await self.session.get(Seat, seat_id)
@@ -84,7 +98,10 @@ class BookingRepository:
         stmt = (
             select(PaymentTransaction)
             .options(
-                joinedload(PaymentTransaction.booking).joinedload(Booking.seat)
+                joinedload(PaymentTransaction.booking).options(
+                    joinedload(Booking.seat),
+                    selectinload(Booking.user),
+                )
             )
             .where(PaymentTransaction.id == payment_id)
         )
@@ -100,13 +117,22 @@ class BookingRepository:
         async with self.session.begin_nested():
             payment.status = PaymentStatus.SUCCESS
             booking.status = BookingStatus.CONFIRMED
+            b_id = booking.id
 
             ticket = Ticket(
-                id=uuid.uuid4(),
-                booking_id=booking.id,
+                booking_id=b_id,
             )
             self.session.add(ticket)
             await self.session.flush()
+
+            secret_bytes = settings.SECRET_KEY.encode("utf-8")
+            data_to_sign = f"ticket:{ticket.id}:booking:{booking.id}".encode("utf-8")
+
+            ticket.signature_hash = hmac.new(
+                secret_bytes,
+                data_to_sign,
+                hashlib.sha256
+            ).hexdigest()
 
         await self.session.commit()
         return ticket

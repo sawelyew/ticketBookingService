@@ -8,7 +8,7 @@ from app.core.config import settings
 class S3Service:
     def __init__(self) -> None:
         self.session = aioboto3.Session()
-        self.endpoint_url = settings.MINIO_PUBLIC_URL
+        self.endpoint_url = settings.MINIO_URL
         self.access_key = settings.MINIO_ROOT_USER
         self.secret_key = settings.MINIO_ROOT_PASSWORD
         self.bucket_name = settings.MINIO_BUCKET_NAME
@@ -78,7 +78,8 @@ class S3Service:
                 },
                 ExpiresIn=expires_in,
             )
-            return url
+
+            return url.replace(settings.MINIO_URL, settings.MINIO_PUBLIC_URL)
 
 
 s3_service = S3Service()

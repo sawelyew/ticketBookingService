@@ -1,8 +1,10 @@
 from redis.asyncio import Redis
 
+
 class RedisService:
     def __init__(self, redis: Redis):
         self.redis = redis
+
 
     async def get_locked_seats(self, event_id: int) -> set[int]:
         pattern = f"lock:event:{event_id}:seat:*"

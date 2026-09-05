@@ -42,6 +42,8 @@ async def process_ticket_generation(
 
     object_name = f"qr_codes/ticket_{ticket_id}.png"
 
+    await s3_service.init_bucket()
+
     await s3_service.upload_file(
         file_data=qr_bytes,
         object_name=object_name,
@@ -83,6 +85,25 @@ async def send_ticket_email(
         body=html_content,
         subtype=MessageType.html,
         attachments=[attachment],
+    )
+
+    fm = FastMail(mail_config)
+    await fm.send_message(message)
+
+
+@broker.task
+async def send_otp_email(email: str, otp_code: str) -> None:
+    html_content = f"""
+        <h3>Код подтверждения регистрации</h3>
+        <p>Ваш одноразовый код: <b>{otp_code}</b></p>
+        <p>Код действителен в течение 10 минут.</p>
+        """
+
+    message = MessageSchema(
+        subject="Код подтверждения регистрации",
+        recipients=[email],
+        body=html_content,
+        subtype=MessageType.html,
     )
 
     fm = FastMail(mail_config)

@@ -143,6 +143,8 @@ class BookingService:
         lock_key = f"lock:event:{booking.seat.event_id}:seat:{booking.seat_id}"
         await self.redis_service.redis.delete(lock_key)
 
+        await self.redis_service.redis.delete(f"user:{booking.user_id}:tickets:active")
+
         await process_ticket_generation.kiq(
             booking_id=booking.id,
             ticket_id=str(ticket.id),

@@ -95,7 +95,7 @@ services:
       dockerfile: Dockerfile
     container_name: ticket_worker
     restart: always
-    command: taskiq worker app.core.taskiq:broker
+    command: taskiq worker app.core.taskiq:broker app.tasks
     env_file:
       - .env
     environment:
